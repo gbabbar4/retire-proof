@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Inside the Model - Retirement Simulator</title>
+  <style>
+    :root {
+      --bg: #080d1a;
+      --bg2: #0d1426;
+      --surface: #121a2e;
+      --surface2: #17223a;
+      --border: #2b3853;
+      --text: #eff3ff;
+      --muted: #9daac5;
+      --muted2: #7585a4;
+      --mint: #86f4cd;
+      --purple: #ae9bff;
+      --amber: #fbc98f;
+      --blue: #94b9ff;
+      --radius: 20px;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: auto; }
+    body { margin: 0; color: var(--text); background: var(--bg); line-height: 1.55; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+    .layout { display: grid; grid-template-columns: 252px minmax(0,1fr); min-height: 100vh; }
+    aside { background: #0d1323; border-right: 1px solid var(--border); padding: 30px 20px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 4px 12px 36px; }
+    .brand-mark { width: 36px; height: 36px; display: grid; place-items: center; background: var(--mint); border-radius: 11px; color: #081725; font-size: 19px; font-weight: 900; }
+    .brand-title { font-size: 15px; font-weight: 800; letter-spacing: -.035em; line-height: 1.25; }
+    .brand-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .17em; margin-top: 3px; }
+    .nav-kicker { color: var(--muted2); font-size: 10px; font-weight: 800; letter-spacing: .16em; padding: 0 13px 11px; }
+    nav { display: grid; gap: 6px; }
+    nav a { display: flex; align-items: center; gap: 11px; border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 650; padding: 11px 12px; }
+    nav a:hover, nav a:focus-visible { background: #1b2942; color: var(--text); }
+    nav a.active { color: var(--mint); background: #18332f; }
+    nav .num { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; color: inherit; opacity: .7; }
+    .sidebar-foot { margin-top: auto; padding: 16px 12px; border-top: 1px solid var(--border); }
+    .mini-status { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+    .foot-note { color: var(--muted2); font-size: 11px; margin-top: 8px; }
+    main { min-width: 0; width: 100%; }
+    .main-inner { max-width: 1300px; margin: 0 auto; padding: 32px clamp(20px, 5vw, 84px) 90px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 46px; }
+    .breadcrumb { color: var(--muted); font-size: 12px; }
+    .breadcrumb strong { color: var(--text); font-weight: 650; }
+    .top-actions { display: flex; align-items: center; gap: 11px; }
+    .small-link { font-size: 12px; font-weight: 650; color: var(--muted); }
+    .small-link:hover { color: var(--text); }
+    .btn { border: 1px solid var(--border); background: var(--surface2); color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 750; }
+    .btn:hover { border-color: var(--mint); }
+    .btn.primary { background: var(--mint); color: #082025; border-color: var(--mint); }
+    .eyebrow { color: var(--mint); text-transform: uppercase; letter-spacing: .22em; font-size: 11px; font-weight: 800; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(42px, 5.2vw, 76px); letter-spacing: -.073em; line-height: 1.07; font-weight: 800; max-width: 790px; margin: 18px 0 19px; }
+    h1 span { color: var(--mint); }
+    .lead { color: var(--muted); max-width: 650px; font-size: 16px; line-height: 1.75; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 9px; margin: 26px 0 37px; }
+    .chip { font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 30px; background: #19253b; border: 1px solid #34435c; color: #c4cfe4; }
+    .chip.mint { color: var(--mint); border-color: #326a63; background: #13312e; }
+    .hero-panel { background: radial-gradient(circle at 87% 20%, #292b60 0%, transparent 32%), linear-gradient(125deg, #182541, #101a2e 70%); border: 1px solid #33415e; border-radius: 25px; overflow: hidden; display: grid; grid-template-columns: 42% 58%; min-height: 320px; }
+    .hero-copy { padding: 32px clamp(23px, 3.2vw, 43px); display: flex; flex-direction: column; justify-content: center; }
+    .hero-copy .tag { font-size: 10px; color: var(--purple); text-transform: uppercase; letter-spacing: .2em; font-weight: 850; }
+    .hero-copy .big-stat { font-size: clamp(48px, 5vw, 83px); letter-spacing: -.085em; line-height: 1.04; font-weight: 850; color: var(--mint); margin: 13px 0 8px; }
+    .hero-copy .stat-title { font-size: 17px; font-weight: 750; letter-spacing: -.03em; }
+    .hero-copy .stat-description { color: #acb9d1; margin-top: 12px; font-size: 12px; max-width: 290px; }
+    .network { display: flex; flex-direction: column; justify-content: center; padding: 15px 20px 7px; min-width: 0; }
+    .network svg { width: 100%; height: 256px; display: block; }
+    .diagram-caption { color: #8494b2; text-align: center; font-size: 10px; padding-bottom: 11px; }
+    .section { margin-top: 75px; scroll-margin-top: 28px; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 22px; }
+    .section h2 { margin: 7px 0 7px; font-size: clamp(27px, 3vw, 38px); line-height: 1.12; letter-spacing: -.058em; }
+    .section-intro { color: var(--muted); font-size: 13px; margin-bottom: 0; max-width: 570px; }
+    .tiny-tag { font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted2); white-space: nowrap; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+    .metric { padding: 24px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); min-width: 0; }
+    .metric .metric-title { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .metric .value { font-size: clamp(25px, 2.75vw, 39px); font-weight: 820; letter-spacing: -.06em; margin: 13px 0 8px; line-height: 1.2; white-space: nowrap; }
+    .metric small { display: block; font-size: 11px; color: var(--muted2); }
+    .metric:nth-child(1) .value { color: var(--mint); }
+    .metric:nth-child(2) .value { color: var(--purple); }
+    .metric:nth-child(3) .value { color: var(--amber); }
+    .metric-footer { margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--border); font-size: 11px; color: #c3cede; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 25px; }
+    .process { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+    .process-card { min-width: 0; background: #121e33; border: 1px solid #31405c; border-radius: 16px; padding: 22px 17px; position: relative; }
+    .step-top { display: flex; justify-content: space-between; align-items: center; color: var(--mint); font-weight: 800; font-size: 11px; }
+    .step-icon { font-size: 20px; }
+    .process-card h3 { font-size: 15px; letter-spacing: -.025em; margin: 28px 0 8px; }
+    .process-card p { font-size: 11px; color: var(--muted); margin: 0; }
+    .process-card:not(:last-child)::after { content: '→'; position: absolute; right: -13px; top: 47%; z-index: 2; color: var(--mint); background: #0b1323; padding: 0 4px; }
+    .spec-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+    .spec-item { background: #141e34; border: 1px solid var(--border); border-radius: 15px; padding: 18px; min-width: 0; }
+    .spec-item .name { color: var(--muted2); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+    .spec-item .spec-value { font-size: 15px; font-weight: 750; margin-top: 11px; overflow-wrap: anywhere; line-height: 1.4; }
+    .placeholder { color: #8b98b0; font-weight: 500 !important; font-style: italic; }
+    .spec-details { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .subheading { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 800; margin-bottom: 12px; }
+    .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+    .feature-chip {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+      }
+    .feature-chip { font-size: 11px; padding: 6px 10px; color: #c5d7eb; background: #20344b; border: 1px solid #34516a; border-radius: 8px; }
+    .text-content { font-size: 13px; color: #b2bfd6; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .training-layout { display: grid; grid-template-columns: 1.65fr 1fr; gap: 14px; }
+    .chart-card { padding: 22px; min-width: 0; }
+    .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .chart-head h3 { font-size: 15px; letter-spacing: -.026em; margin: 0; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+    .legend span { font-size: 11px; color: var(--muted); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+    .legend i { width: 10px; height: 10px; display: inline-block; border-radius: 2px; }
+    #lossChart { width: 100%; height: auto; margin-top: 15px; display: block; }
+    .chart-note { color: var(--muted2); font-size: 11px; margin: 8px 0 0; }
+    .analysis-card { display: flex; flex-direction: column; }
+    .analysis-card h3 { font-size: 16px; letter-spacing: -.035em; margin-bottom: 12px; }
+    .analysis-card p { font-size: 12px; color: var(--muted); }
+    .compare { margin-top: auto; }
+    .compare-row { margin-top: 17px; }
+    .compare-row .compare-labels { display: flex; justify-content: space-between; gap: 6px; color: #ccd5e9; font-size: 11px; margin-bottom: 7px; }
+    .compare-track { height: 9px; border-radius: 20px; background: #29344b; overflow: hidden; }
+    .compare-bar { height: 100%; border-radius: 20px; background: var(--purple); }
+    .compare-bar.good { background: var(--mint); }
+    .notice { background: #2a261f; border: 1px solid #534333; padding: 17px 20px; border-radius: 14px; font-size: 12px; color: #e8d8c2; margin-top: 15px; }
+    .notice strong { color: #ffe0b2; }
+    .limits-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+    .limit { border-top: 2px solid #7486a8; padding: 20px 18px 14px 0; }
+    .limit:nth-child(1) { border-color: var(--mint); }
+    .limit:nth-child(2) { border-color: var(--purple); }
+    .limit:nth-child(3) { border-color: var(--amber); }
+    .limit h3 { font-size: 15px; margin-bottom: 8px; }
+    .limit p { font-size: 12px; color: var(--muted); }
+    .bottom { margin-top: 75px; background: #16233a; border: 1px solid #36465f; border-radius: 22px; padding: 28px 32px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .bottom h2 { font-size: 22px; letter-spacing: -.045em; margin: 0 0 5px; }
+    .bottom p { font-size: 12px; color: var(--muted); margin: 0; }
+    footer { text-align: center; padding: 37px 0 0; color: var(--muted2); font-size: 10px; }
+    dialog { border: 1px solid #455976; background: #121d32; color: var(--text); width: min(650px, calc(100% - 32px)); max-height: 88vh; padding: 0; border-radius: 20px; box-shadow: 0 30px 100px #0009; }
+    dialog::backdrop { background: #030712c9; }
+    .dialog-head { padding: 22px 25px 18px; display: flex; justify-content: space-between; align-items: start; gap: 12px; border-bottom: 1px solid var(--border); }
+    .dialog-head h2 { margin: 0 0 5px; font-size: 22px; letter-spacing: -.045em; }
+    .dialog-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .close { color: var(--text); background: #21314b; border: 1px solid #44546c; border-radius: 9px; min-width: 35px; height: 35px; font-size: 18px; }
+    .modal-body { overflow-y: auto; max-height: 63vh; padding: 23px 25px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .field { min-width: 0; }
+    .field.full { grid-column: 1/-1; }
+    .field label { display: block; font-size: 11px; font-weight: 750; color: #c6d2e5; margin-bottom: 6px; }
+    .field input, .field textarea { width: 100%; padding: 11px 12px; border: 1px solid #3c506e; border-radius: 9px; background: #0a1426; color: #f0f4ff; font-size: 13px; }
+    .field textarea { resize: vertical; min-height: 77px; }
+    .field input::placeholder, .field textarea::placeholder { color: #61718b; }
+    .dialog-actions { padding: 16px 25px 20px; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); }
+    .dialog-actions .right { display: flex; gap: 10px; }
+    .form-hint { color: var(--muted2); font-size: 11px; margin: 0 0 16px; }
+    .toast { position: fixed; bottom: 22px; right: 25px; max-width: 300px; background: #1d3a38; color: #e0fff1; border: 1px solid #417a69; padding: 12px 15px; border-radius: 9px; font-size: 12px; z-index: 20; }
+    [hidden] { display: none !important; }
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 200px minmax(0,1fr); }
+      .main-inner { padding-left: 25px; padding-right: 25px; }
+      .hero-panel { grid-template-columns: 45% 55%; }
+      .spec-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .training-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 750px) {
+      .layout { display: block; }
+      aside { position: static; height: auto; padding: 12px 15px; border-right: 0; border-bottom: 1px solid var(--border); }
+      .brand { padding: 4px; }
+      .nav-kicker, .sidebar-foot { display: none; }
+      nav { display: flex; overflow-x: auto; gap: 5px; padding: 5px 0; }
+      nav a { white-space: nowrap; padding: 8px 11px; }
+      .main-inner { padding: 22px 18px 55px; }
+      .topbar { margin-bottom: 33px; }
+      .top-actions .small-link { display: none; }
+      .hero-panel { grid-template-columns: 1fr; }
+      .hero-copy { padding: 27px 25px 10px; }
+      .network svg { height: 200px; }
+      .hero-meta { margin-bottom: 27px; }
+      .metrics { grid-template-columns: 1fr; }
+      .process { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .process-card:nth-child(2)::after { display: none; }
+      .spec-details { grid-template-columns: 1fr; }
+      .limits-grid { grid-template-columns: 1fr; }
+      .section { margin-top: 58px; }
+      .bottom { flex-direction: column; align-items: start; padding: 24px; }
+    }
+    @media (max-width: 460px) {
+      .brand-sub { display: none; }
+      .breadcrumb { font-size: 11px; }
+      .spec-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .section-head { align-items: start; }
+      .section-head .tiny-tag { display: none; }
+      .dialog-actions { flex-wrap: wrap; }
+      .diagram-caption { font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside aria-label="Model page navigation">
+    <a class="brand" href="#intro" aria-label="Inside the Model home">
+      <span class="brand-mark">N.</span>
+      <span><span class="brand-title">RetireLab</span><span class="brand-sub" style="display:block">Model intelligence</span></span>
+    </a>
+    <div class="nav-kicker">EXPLORE THE MODEL</div>
+    <nav aria-label="Page sections">
+      <a class="active" href="#intro"><span class="num">01</span> Overview</a>
+      <a href="#results"><span class="num">02</span> Results at a glance</a>
+      <a href="#pipeline"><span class="num">03</span> How it works</a>
+      <a href="#specs"><span class="num">04</span> Model specs</a>
+      <a href="#training"><span class="num">05</span> Training notebook</a>
+      <a href="#limits"><span class="num">06</span> Limitations</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="mini-status"><span class="status-dot"></span> Experimental model card</div>
+      <div class="foot-note">Built to make the model understandable, not to hide the trade-offs.</div>
+    </div>
+  </aside>
+  <main>
+    <div class="main-inner">
+      <header class="topbar">
+        <div class="breadcrumb">Retirement simulator&nbsp; / &nbsp;<strong>Inside the model</strong></div>
+        <div class="top-actions">
+          <a class="small-link" href="./index.html">← Back to simulator</a>
+          <button class="btn" data-open-editor>✎ &nbsp; Edit specs</button>
+        </div>
+      </header>
+
+      <section id="intro" aria-labelledby="heroTitle">
+        <div class="eyebrow">THE SCIENCE BEHIND THE SIMULATION · 001</div>
+        <h1 id="heroTitle">Meet the brain<br/>behind the <span>forecast.</span></h1>
+        <p class="lead">A look inside the neural network powering our retirement simulator. Explore what it learns, how it was evaluated, and the decisions behind the prediction.</p>
+        <div class="hero-meta">
+          <span class="chip mint">● Built from scratch</span>
+          <span class="chip">Neural network research</span>
+          <span class="chip">Evaluation snapshot</span>
+        </div>
+        <div class="hero-panel">
+          <div class="hero-copy">
+            <span class="tag">Validation performance</span>
+            <div class="big-stat" id="improvementHero">~76%</div>
+            <div class="stat-title">Lower MSE than baseline</div>
+            <p class="stat-description">The neural network achieved a lower validation mean squared error in the reported comparison. This is not a 76% prediction accuracy score.</p>
+          </div>
+          <div class="network" aria-label="Illustrative network showing input nodes, hidden processing, and an output node">
+            <svg viewBox="0 0 470 255" role="img" aria-labelledby="networkTitle networkDesc">
+              <title id="networkTitle">Conceptual neural network diagram</title>
+              <desc id="networkDesc">Four input nodes connected to three intermediate columns of nodes and two output nodes. Not a literal representation of the trained network architecture.</desc>
+              <defs><linearGradient id="connection" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#52949b"/><stop offset="1" stop-color="#8668bc"/></linearGradient></defs>
+              <g fill="none" stroke="url(#connection)" stroke-width="1.35" opacity=".43">
+                <path d="M50 43L150 36 M50 43L150 91 M50 43L150 146 M50 43L150 201 M50 100L150 36 M50 100L150 91 M50 100L150 146 M50 100L150 201 M50 157L150 36 M50 157L150 91 M50 157L150 146 M50 157L150 201 M50 214L150 36 M50 214L150 91 M50 214L150 146 M50 214L150 201"/>
+                <path d="M150 36L269 63 M150 36L269 128 M150 36L269 193 M150 91L269 63 M150 91L269 128 M150 91L269 193 M150 146L269 63 M150 146L269 128 M150 146L269 193 M150 201L269 63 M150 201L269 128 M150 201L269 193"/>
+                <path d="M269 63L393 98 M269 63L393 159 M269 128L393 98 M269 128L393 159 M269 193L393 98 M269 193L393 159"/>
+              </g>
+              <g fill="#7df0ca" stroke="#d7ffef" stroke-width="1.5"><circle cx="50" cy="43" r="8"/><circle cx="50" cy="100" r="8"/><circle cx="50" cy="157" r="8"/><circle cx="50" cy="214" r="8"/></g>
+              <g fill="#837cec" stroke="#cbc8ff" stroke-width="1.3"><circle cx="150" cy="36" r="8"/><circle cx="150" cy="91" r="8"/><circle cx="150" cy="146" r="8"/><circle cx="150" cy="201" r="8"/><circle cx="269" cy="63" r="8"/><circle cx="269" cy="128" r="8"/><circle cx="269" cy="193" r="8"/></g>
+              <g fill="#fdcfa1" stroke="#ffe8d0" stroke-width="1.5"><circle cx="393" cy="98" r="10"/><circle cx="393" cy="159" r="10"/></g>
+              <g font-family="ui-monospace,monospace" fill="#899ab9" font-size="10" text-anchor="middle"><text x="50" y="244">INPUTS</text><text x="211" y="244">PROCESSING</text><text x="393" y="244">OUTPUT</text></g>
+            </svg>
+            <div class="diagram-caption">Concept illustration only · Actual layer counts are editable in model specs</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="results" aria-labelledby="resultsTitle">
+        <div class="section-head">
+          <div><div class="eyebrow">THE NUMBERS</div><h2 id="resultsTitle">Proof, not just promises.</h2><p class="section-intro">These values are taken from the training and evaluation results shared for this project.</p></div>
+          <div class="tiny-tag">VALIDATION SET</div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="metric-title">Neural network · MSE</div><div class="value">0.04138</div><small>Validation mean squared error</small><div class="metric-footer">↓ Better than the reported baseline</div></div>
+          <div class="metric"><div class="metric-title">Baseline · MSE</div><div class="value">0.17274</div><small>Validation mean squared error</small><div class="metric-footer">Reference for comparison</div></div>
+          <div class="metric"><div class="metric-title">Neural network · MAE</div><div class="value">13.40 pp</div><small>Validation error in percentage points</small><div class="metric-footer">Important remaining prediction error</div></div>
+        </div>
+      </section>
+
+      <section class="section" id="pipeline" aria-labelledby="pipelineTitle">
+        <div class="section-head"><div><div class="eyebrow">THE BIG PICTURE</div><h2 id="pipelineTitle">From inputs to insight.</h2><p class="section-intro">Here's the conceptual path a forecast takes, explained without the intimidating math.</p></div></div>
+        <div class="process">
+          <div class="process-card"><div class="step-top"><span>01 / INPUT</span><span class="step-icon">⌘</span></div><h3>Collect features</h3><p>Retirement-related user information enters the model as numerical features.</p></div>
+          <div class="process-card"><div class="step-top"><span>02 / PREPARE</span><span class="step-icon">≋</span></div><h3>Prepare data</h3><p>Features must follow the same preprocessing as in training; document that step here.</p></div>
+          <div class="process-card"><div class="step-top"><span>03 / COMPUTE</span><span class="step-icon">◈</span></div><h3>Neural network</h3><p>Learned weights and nonlinear transforms combine signals into a model output.</p></div>
+          <div class="process-card"><div class="step-top"><span>04 / INTERPRET</span><span class="step-icon">↗</span></div><h3>Present result</h3><p>Convert the model output back to user-friendly units before displaying a forecast.</p></div>
+        </div>
+      </section>
+
+      <section class="section" id="specs" aria-labelledby="specsTitle">
+        <div class="section-head">
+          <div><div class="eyebrow">UNDER THE HOOD</div><h2 id="specsTitle">The model's ID card.</h2><p class="section-intro">Known values are filled in.</p></div>
+          
+        </div>
+        <div class="spec-grid">
+          <div class="spec-item"><div class="name">Architecture</div><div class="spec-value" data-spec="architecture">7 → 16 → 16 → 1</div></div>
+          <div class="spec-item"><div class="name">Hidden layers</div><div class="spec-value" data-spec="layers">2 hidden layers (16 neurons each)</div></div>
+          <div class="spec-item"><div class="name">Activation</div><div class="spec-value" data-spec="activation">ReLU for Linear Layers & Sigmoid for Output Layer</div></div>
+          <div class="spec-item"><div class="name">Optimizer</div><div class="spec-value" data-spec="optimizer">Gradient Descent</div></div>
+          <div class="spec-item"><div class="name">Loss function</div><div class="spec-value" data-spec="loss">Mean Squared Error</div></div>
+          <div class="spec-item"><div class="name">Learning rate</div><div class="spec-value" data-spec="lr">0.01</div></div>
+          <div class="spec-item"><div class="name">Batch size</div><div class="spec-value" data-spec="batch">32</div></div>
+          <div class="spec-item"><div class="name">Training run</div><div class="spec-value" data-spec="epochs">100 configured epochs</div></div>
+        </div>
+          <div class="spec-details">
+
+        <!-- INPUT FEATURES -->
+        <div class="card">
+          <div class="subheading">Input features</div>
+
+          <div class="chip-row" id="featureChips">
+            <span class="feature-chip">Current Age</span>
+            <span class="feature-chip">Retirement Age</span>
+            <span class="feature-chip">Current Corpus</span>
+            <span class="feature-chip">Monthly Savings</span>
+            <span class="feature-chip">Monthly Expenses</span>
+            <span class="feature-chip">Equity Allocation</span>
+            <span class="feature-chip">Inflation Rate</span>
+          </div>
+        </div>
+
+        <!-- PREDICTION TARGET -->
+        <div class="card">
+          <div class="subheading">Prediction target</div>
+
+            <p class="text-content" id="targetText">
+              Estimated retirement survival probability (0-100%).
+              The neural network predicts the likelihood of
+              retirement funds lasting through the modeled
+              planning horizon, up to age 90.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- MODEL EXPLANATION -->
+        <div class="card" style="margin-top:14px">
+          <div class="subheading">In your own words</div>
+
+            <p class="text-content" id="briefText">
+                Retire-Proof uses a fully connected feedforward neural network built from scratch using NumPy. 
+                The model learns from simulated retirement scenarios and estimates the probability of retirement funds lasting through the planning horizon. 
+                It uses seven financial inputs, ReLU activation in hidden layers, and a sigmoid output to produce a probability between 0 and 1.
+            </p>
+        </div>
+      </section>
+
+      <section class="section" id="training" aria-labelledby="trainingTitle">
+        <div class="section-head"><div><div class="eyebrow">TRAINING NOTEBOOK</div><h2 id="trainingTitle">Learning, one epoch at a time.</h2><p class="section-intro">A glimpse of the network updating its parameters to reduce prediction error.</p></div><div class="tiny-tag">RECORDED EPOCHS 5–40</div></div>
+        <div class="training-layout">
+          <div class="card chart-card">
+            <div class="chart-head"><h3>Training vs validation loss</h3><div class="legend"><span><i style="background:#86f4cd"></i>Train</span><span><i style="background:#ae9bff"></i>Validation</span></div></div>
+            <svg id="lossChart" viewBox="0 0 700 290" role="img" aria-label="Line chart. Training MSE decreases from 0.191328 at epoch 5 to 0.084588 at epoch 40; validation MSE decreases from 0.214853 to 0.079644 over the same checkpoints."></svg>
+            <p class="chart-note">Only the training checkpoints supplied (epochs 5–40) are plotted. This is not the full 100-epoch training history.</p>
+          </div>
+          <div class="card analysis-card"><h3>What the results tell us</h3><p>The validation loss generally followed the training loss downward over the provided checkpoints. That is a promising pattern, but performance still needs careful testing.</p><div class="compare"><div class="subheading">Validation MSE comparison</div><div class="compare-row"><div class="compare-labels"><span>Baseline</span><strong>0.17274</strong></div><div class="compare-track"><div class="compare-bar" style="width:100%"></div></div></div><div class="compare-row"><div class="compare-labels"><span>Neural network</span><strong>0.04138</strong></div><div class="compare-track"><div class="compare-bar good" style="width:23.96%"></div></div></div></div></div>
+        </div>
+        <div class="notice"><strong>How to read these numbers:</strong> Lower MSE is better when both models are assessed on the same target scale and validation set. A 13.40-percentage-point MAE means the model still makes substantial errors. Neither metric guarantees reliable financial decisions.</div>
+      </section>
+
+      <section class="section" id="limits" aria-labelledby="limitsTitle">
+        <div class="section-head"><div><div class="eyebrow">RESEARCH WITH RESPONSIBILITY</div><h2 id="limitsTitle">What it can - and can't - say.</h2><p class="section-intro">Every model card should be as clear about uncertainty as it is about performance.</p></div></div>
+        <div class="limits-grid">
+          <div class="limit"><h3>Performance ≠ certainty</h3><p>A low validation loss doesn't mean every individual's retirement outcome can be predicted accurately. Inspect errors across different cases.</p></div>
+          <div class="limit"><h3>Data shapes the answer</h3><p>Results depend on the training data, feature quality, preprocessing, and whether new users resemble training examples.</p></div>
+          <div class="limit"><h3>Financial forecasts are uncertain</h3><p>Market returns, inflation, life events, and policy changes can alter retirement outcomes. Use predictions as scenarios, not guarantees.</p></div>
+        </div>
+      </section>
+
+      <!-- <section class="bottom"><div><div class="eyebrow" style="margin-bottom:10px">MAKE IT YOURS</div><h2>Know the model. Trust the process.</h2><p>Fill in the real architecture and feature descriptions to turn this into a complete model card.</p></div><button class="btn primary" data-open-editor>Edit the model card ↗</button></section> -->
+      <footer>RETIRELAB · INSIDE THE MODEL · A TRANSPARENT VIEW OF EXPERIMENTAL MACHINE LEARNING</footer>
+    </div>
+  </main>
+</div>
+
+<!-- <dialog id="specDialog" aria-labelledby="modalHeading">
+  <form id="specForm" method="dialog">
+    <div class="dialog-head"><div><h2 id="modalHeading">Edit model specs</h2><p>Personalize the explanation without touching the page code.</p></div><button class="close" type="button" id="closeEditor" aria-label="Close editor">×</button></div>
+    <div class="modal-body">
+      <p class="form-hint">Saved in this browser only. If you deploy this page, update your project source or data API to make the content permanent for all visitors.</p>
+      <div class="form-grid">
+        <div class="field"><label for="architecture">Architecture type</label><input id="architecture" name="architecture" placeholder="e.g. Fully connected MLP" /></div>
+        <div class="field"><label for="layers">Hidden layer sizes</label><input id="layers" name="layers" placeholder="e.g. 64 → 32 → 16" /></div>
+        <div class="field"><label for="activation">Activation function</label><input id="activation" name="activation" placeholder="e.g. ReLU" /></div>
+        <div class="field"><label for="optimizer">Optimizer</label><input id="optimizer" name="optimizer" placeholder="e.g. Gradient Descent" /></div>
+        <div class="field"><label for="loss">Loss function</label><input id="loss" name="loss" placeholder="e.g. Mean Squared Error" /></div>
+        <div class="field"><label for="lr">Learning rate</label><input id="lr" name="lr" placeholder="e.g. 0.001" /></div>
+        <div class="field"><label for="batch">Batch size</label><input id="batch" name="batch" placeholder="e.g. 32 or Full batch" /></div>
+        <div class="field"><label for="epochs">Training epochs</label><input id="epochs" name="epochs" placeholder="100 configured epochs" /></div>
+        <div class="field full"><label for="features">Feature names (comma-separated)</label><textarea id="features" name="features" placeholder="Enter the actual input feature names used during training"></textarea></div>
+        <div class="field full"><label for="target">Output / target variable</label><input id="target" name="target" placeholder="Exactly what the model predicts (with units)" /></div>
+        <div class="field full"><label for="brief">Model explanation</label><textarea id="brief" name="brief" rows="4" placeholder="Explain why you built this model and the data it uses"></textarea></div>
+      </div>
+    </div>
+    <div class="dialog-actions"><button type="button" class="btn" id="resetSpecs">Reset local edits</button><div class="right"><button class="btn" type="button" id="cancelSpecs">Cancel</button><button class="btn primary" type="submit">Save specs</button></div></div>
+  </form>
+</dialog>
+<div id="toast" class="toast" hidden role="status"></div> -->
+<script>
+  // // Initial model card: intentionally avoids inventing unknown NN architecture details.
+  // const initial = {
+  //   architecture: '', layers: '', activation: '', optimizer: '', loss: '',
+  //   lr: '', batch: '', epochs: '100 configured epochs', features: '', target: '', brief: ''
+  // };
+  // const localKey = 'retirelab-model-card-v1';
+  // let specs = { ...initial };
+  // try {
+  //   const saved = JSON.parse(localStorage.getItem(localKey) || 'null');
+  //   if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+  //     for (const key of Object.keys(initial)) {
+  //       if (typeof saved[key] === 'string') specs[key] = saved[key];
+  //     }
+  //   }
+  // } catch (err) { /* localStorage may be unavailable, e.g. privacy mode */ }
+
+  // const fallbackBrief = 'A neural network built to support the retirement simulation. Add a description of your exact task, training data, and why you chose this model.';
+  // function renderSpecs() {
+  //   for (const el of document.querySelectorAll('[data-spec]')) {
+  //     const val = specs[el.dataset.spec]?.trim();
+  //     el.textContent = val || 'Not documented yet';
+  //     el.classList.toggle('placeholder', !val);
+  //   }
+  //   const chips = document.getElementById('featureChips');
+  //   chips.replaceChildren();
+  //   const features = specs.features.split(',').map(s => s.trim()).filter(Boolean);
+  //   if (features.length === 0) features.push('Add your actual feature names');
+  //   features.forEach(name => {
+  //     const chip = document.createElement('span');
+  //     chip.className = 'feature-chip';
+  //     chip.textContent = name;
+  //     chips.append(chip);
+  //   });
+  //   document.getElementById('targetText').textContent = specs.target.trim() || 'Not documented yet — add what the model predicts and its unit.';
+  //   document.getElementById('briefText').textContent = specs.brief.trim() || fallbackBrief;
+  // }
+  // renderSpecs();
+
+  // const modal = document.getElementById('specDialog');
+  // const form = document.getElementById('specForm');
+  // function populateEditor() {
+  //   for (const key of Object.keys(initial)) form.elements.namedItem(key).value = specs[key] || '';
+  // }
+  // document.querySelectorAll('[data-open-editor]').forEach(button => button.addEventListener('click', () => {
+  //   populateEditor(); modal.showModal();
+  // }));
+  // function closeModal() { modal.close(); }
+  // document.getElementById('closeEditor').addEventListener('click', closeModal);
+  // document.getElementById('cancelSpecs').addEventListener('click', closeModal);
+  // modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  // form.addEventListener('submit', e => {
+  //   e.preventDefault();
+  //   for (const key of Object.keys(initial)) specs[key] = form.elements.namedItem(key).value.trim();
+  //   try { localStorage.setItem(localKey, JSON.stringify(specs)); } catch (err) { /* display still updates */ }
+  //   renderSpecs(); closeModal(); notify('Model card updated in this browser.');
+  // });
+  // document.getElementById('resetSpecs').addEventListener('click', () => {
+  //   specs = { ...initial };
+  //   try { localStorage.removeItem(localKey); } catch (err) { /* safe fallback */ }
+  //   populateEditor(); renderSpecs(); closeModal(); notify('Local edits reset.');
+  // });
+  // let toastTimeout;
+  // function notify(message) {
+  //   const toast = document.getElementById('toast');
+  //   toast.textContent = message; toast.hidden = false;
+  //   clearTimeout(toastTimeout); toastTimeout = setTimeout(() => { toast.hidden = true; }, 3300);
+  // }
+
+  // These are ONLY the exact epoch 5–40 loss checkpoints shared in project results.
+  const train = [0.191328, 0.158248, 0.134239, 0.118317, 0.106998, 0.098177, 0.090849, 0.084588];
+  const validation = [0.214853, 0.176507, 0.144613, 0.122537, 0.107135, 0.095790, 0.086945, 0.079644];
+  const epochs = [5, 10, 15, 20, 25, 30, 35, 40];
+  const chart = document.getElementById('lossChart');
+  const NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attributes, text) {
+    const node = document.createElementNS(NS, tag);
+    for (const [name, val] of Object.entries(attributes || {})) node.setAttribute(name, val);
+    if (text !== undefined) node.textContent = text;
+    chart.append(node); return node;
+  }
+  const x0 = 58, x1 = 675, y0 = 18, y1 = 238, ymax = .23;
+  const sx = i => x0 + i / (epochs.length - 1) * (x1 - x0);
+  const sy = v => y1 - (v / ymax) * (y1 - y0);
+  [0, .05, .10, .15, .20].forEach(tick => {
+    const y = sy(tick);
+    svgEl('line', { x1: x0, y1: y, x2: x1, y2: y, stroke: '#344059', 'stroke-width': 1, 'stroke-dasharray': '4 6' });
+    svgEl('text', { x: x0 - 13, y: y + 4, 'text-anchor': 'end', fill: '#8897b4', 'font-size': 12 }, tick.toFixed(2));
+  });
+  epochs.forEach((ep, i) => svgEl('text', { x: sx(i), y: 263, 'text-anchor': 'middle', fill: '#8897b4', 'font-size': 12 }, ep));
+  const chartPath = series => series.map((p, i) => `${i ? 'L' : 'M'} ${sx(i).toFixed(2)} ${sy(p).toFixed(2)}`).join(' ');
+  svgEl('path', { d: chartPath(train), stroke: '#86f4cd', 'stroke-width': 3.4, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  svgEl('path', { d: chartPath(validation), stroke: '#ae9bff', 'stroke-width': 3.4, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  for (const [series, color] of [[train, '#86f4cd'], [validation, '#ae9bff']]) {
+    series.forEach((p, i) => {
+      const circle = svgEl('circle', { cx: sx(i), cy: sy(p), r: 4, fill: color, stroke: '#121a2e', 'stroke-width': 2 });
+      const title = document.createElementNS(NS, 'title');
+      title.textContent = `Epoch ${epochs[i]}: ${p.toFixed(6)}`;
+      circle.append(title);
+    });
+  }
+  svgEl('text', { x: 366, y: 286, 'text-anchor': 'middle', fill: '#8897b4', 'font-size': 11 }, 'EPOCH');
+  const baselineMSE = 0.17273719222656247;
+  const nnMSE = 0.041382506146392835;
+  const reduction = (1 - nnMSE / baselineMSE) * 100;
+  document.getElementById('improvementHero').textContent = `~${Math.round(reduction)}%`;
+
+  document.querySelectorAll('nav a').forEach(link => link.addEventListener('click', () => {
+    document.querySelectorAll('nav a').forEach(item => item.classList.remove('active'));
+    link.classList.add('active');
+  }));
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<div class="retire-sim-root">
+<header class="hero">
+    <div class="wrap">
+      <nav class="nav" aria-label="Main navigation">
+        <div class="brand"><span class="brand-mark">R</span> Retire-Proof<span style="color:#65ddc6">.</span></div>
+        <div class="nav-actions">
+          <span class="version">MODEL V1</span>
+          <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Enable dark mode" aria-pressed="false">🌙 Dark mode</button>
+        </div>
+      </nav>
+      <div class="intro">
+        <div class="eyebrow">Retirement planning lab</div>
+        <h1>See your future<br /><span>more clearly.</span></h1>
+        <p class="lead">Explore an experimental retirement survival estimate powered by a neural network built from scratch. Change your financial inputs and see the model's prediction.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap layout">
+      <section class="card form-card" aria-labelledby="form-heading">
+        <div class="form-header">
+          <h2 id="form-heading">Your financial snapshot</h2>
+          <p class="sub">Enter seven details to generate a retirement estimate.</p>
+        </div>
+        <form id="retirement-form">
+          <div class="section">
+            <div class="section-label"><span>01</span> Retirement timeline</div>
+            <div class="field-grid">
+              <label class="field" for="age"><span class="field-name">Current age</span><div class="input-shell"><input id="age" type="number" min="0" max="120" step="1" value="25" required /><span class="suffix">years</span></div></label>
+              <label class="field" for="retirement"><span class="field-name">Retirement age</span><div class="input-shell"><input id="retirement" type="number" min="0" max="120" step="1" value="65" required /><span class="suffix">years</span></div></label>
+            </div>
+            <div class="quick-fact"><span class="fact-dot"></span><span id="years-to-retirement">40 years until your planned retirement</span></div>
+          </div>
+
+          <div class="section">
+            <div class="section-label"><span>02</span> Savings & spending</div>
+            <div class="field-grid">
+              <label class="field" for="corpus"><span class="field-name">Current corpus</span><div class="input-shell"><input id="corpus" type="number" min="0" step="any" value="500000" required /><span class="suffix">₹</span></div><small class="helper">Total amount already invested</small></label>
+              <label class="field" for="monthly_savings"><span class="field-name">Monthly savings</span><div class="input-shell"><input id="monthly_savings" type="number" min="0" step="any" value="25000" required /><span class="suffix">₹/mo</span></div><small class="helper">What you save every month</small></label>
+              <label class="field" for="monthly_expense_today"><span class="field-name">Monthly expenses</span><div class="input-shell"><input id="monthly_expense_today" type="number" min="0" step="any" value="30000" required /><span class="suffix">₹/mo</span></div><small class="helper">Your expenses in today's money</small></label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-label"><span>03</span> Market assumptions</div>
+            <div class="field-grid">
+              <label class="field" for="equity_alloc"><span class="field-name">Equity allocation</span><div class="input-shell"><input id="equity_alloc" type="number" min="0" max="100" step="any" value="60" required /><span class="suffix">%</span></div><small class="helper">Share allocated to equity</small></label>
+              <label class="field" for="infl"><span class="field-name">Annual inflation</span><div class="input-shell"><input id="infl" type="number" min="0" max="100" step="any" value="7" required /><span class="suffix">%</span></div><small class="helper">Expected annual inflation rate</small></label>
+            </div>
+          </div>
+
+          <button id="predict-button" class="submit-btn" type="submit">Generate prediction <span aria-hidden="true">↗</span></button>
+          <p class="form-footnote">Inputs are processed by the Python neural network in this Streamlit app.</p>
+        </form>
+      </section>
+
+      <aside class="card results" aria-labelledby="result-heading">
+        <div class="result-top">
+          <span class="result-eyebrow">Your model result</span>
+          <h2 id="result-heading">Retirement outlook</h2>
+          <p class="result-intro">Estimated probability of retirement funds lasting through the modeled horizon</p>
+          <div id="gauge" class="gauge" role="img" aria-label="No prediction calculated yet">
+            <div class="gauge-core">
+              <div class="big-number"><span id="prediction-number">—</span><small id="percent-sign" hidden>%</small></div>
+              <div class="big-caption">Experimental NN estimate</div>
+            </div>
+          </div>
+          <p id="prediction-output" class="result-status" role="status" aria-live="polite">Enter your information and select “Generate prediction”.</p>
+        </div>
+        <div class="result-bottom">
+          <div class="detail-row"><span>Prediction engine</span><strong>From-scratch neural network</strong></div>
+          <div class="detail-row"><span>Model</span><span id="model-version" class="badge">v1.0</span></div>
+          <div class="detail-row"><span>Planning horizon</span><strong>To age 90</strong></div>
+          <div class="notice"><strong>Important:</strong> This NN is an experimental approximation trained on simulated scenarios. Test errors can be large, especially in low-survival cases. Do not rely on this estimate alone for financial decisions; verify using the Monte Carlo simulation and qualified advice.</div>
+        </div>
+      </aside>
+    </div>
+    <div class="footer">Retire-Proof · Built with a neural network from scratch</div>
+  </main>
+</div>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d182b" />
+  <title>Retire-Proof | Retirement Planning Lab</title>
+  <style>
+    :root {
+      --ink: #15243a;
+      --muted: #69778c;
+      --line: #e4eaf0;
+      --surface: #ffffff;
+      --canvas: #f4f7fa;
+      --navy: #101e32;
+      --mint: #5ce3c4;
+      --focus: #217fbc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at 88% -10%, #214b57 0%, transparent 35%),
+                  linear-gradient(117deg, #0d192d 0%, #162a40 100%);
+      color: white;
+      padding: 0 24px 121px;
+    }
+    .hero::after {
+      content: ""; position: absolute; width: 340px; height: 340px;
+      right: -135px; top: 55px; border: 1px solid rgba(255,255,255,.09);
+      border-radius: 50%; box-shadow: 0 0 0 65px rgba(255,255,255,.018), 0 0 0 140px rgba(255,255,255,.013);
+      pointer-events: none;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; position: relative; z-index: 1; }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 18px; font-weight: 800; letter-spacing: -.55px; }
+    .brand-mark {
+      display: grid; place-items: center; width: 35px; height: 35px;
+      border-radius: 12px; background: var(--mint); color: #0d192d;
+      font-weight: 900; font-size: 19px;
+    }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .theme-toggle {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 14px; border: 1px solid #526678; border-radius: 100px;
+      background: rgba(255,255,255,.07); color: #f4fbfa;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,.16); border-color: #8ab1b5; }
+    .theme-toggle:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+    .version { font-size: 12px; color: #bcd0df; border: 1px solid #4a6477; border-radius: 100px; padding: 8px 12px; }
+    .eyebrow { color: #77eacb; font-size: 12px; letter-spacing: 2.2px; font-weight: 800; text-transform: uppercase; }
+    .intro { max-width: 740px; padding: 42px 0 0; position: relative; z-index: 1; }
+    h1 { font-size: clamp(35px, 5vw, 57px); margin: 14px 0 14px; letter-spacing: -2.6px; line-height: 1.13; font-weight: 800; }
+    h1 span { color: var(--mint); }
+    .lead { color: #bdcddd; line-height: 1.65; font-size: 15px; max-width: 605px; margin: 0; }
+    main { padding: 0 24px 60px; margin-top: -73px; position: relative; z-index: 2; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr); gap: 22px; align-items: start; }
+    .card { background: var(--surface); border: 1px solid #e9eef3; border-radius: 22px; box-shadow: 0 16px 52px rgba(12,29,51,.08); }
+    .form-card { padding: 30px; }
+    .form-header { margin-bottom: 29px; }
+    h2 { margin: 0 0 7px; font-size: 23px; letter-spacing: -.65px; }
+    .sub { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.65; }
+    .section { padding: 18px 0 21px; border-top: 1px solid var(--line); }
+    .section:first-of-type { border-top: none; padding-top: 0; }
+    .section-label { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 800; margin-bottom: 16px; }
+    .section-label span { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: #e8f8f4; color: #16816f; font-size: 11px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: block; min-width: 0; }
+    .field-name { display: block; font-weight: 650; font-size: 12px; color: #344760; margin-bottom: 8px; }
+    .input-shell { position: relative; }
+    .input-shell input {
+      appearance: textfield; -moz-appearance: textfield; width: 100%; height: 47px;
+      border: 1px solid #dbe4ec; border-radius: 11px; background: #fbfcfe;
+      padding: 0 52px 0 14px; outline: none; color: #15243a; font-weight: 700;
+      transition: border-color .2s, box-shadow .2s; min-width: 0;
+    }
+    .input-shell input::-webkit-inner-spin-button, .input-shell input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .input-shell input:focus { border-color: #259e8c; box-shadow: 0 0 0 3px #259e8c22; background: white; }
+    .suffix { color: #8190a2; font-size: 12px; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+    .helper { display: block; font-size: 11px; color: #8996a5; margin-top: 6px; line-height: 1.5; }
+    .quick-fact { display: flex; gap: 9px; align-items: center; margin-top: 17px; background: #f2faf8; padding: 11px 13px; border-radius: 10px; font-size: 12px; color: #35685f; }
+    .fact-dot { width: 7px; height: 7px; border-radius: 50%; background: #25ad91; flex-shrink: 0; }
+    .submit-btn {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      width: 100%; min-height: 52px; padding: 12px 16px; border: 0; border-radius: 12px;
+      color: #09251f; background: #5ce3c4; font-weight: 800; cursor: pointer;
+      transition: transform .18s, background .18s;
+    }
+    .submit-btn:hover { background: #43d7b6; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: .6; cursor: wait; transform: none; }
+    .submit-btn:focus-visible { outline: 3px solid #188c7e; outline-offset: 3px; }
+    .form-footnote { margin: 12px 0 0; color: #8a97a6; font-size: 11px; text-align: center; line-height: 1.5; }
+    .results { overflow: hidden; position: sticky; top: 18px; }
+    .result-top { background: radial-gradient(circle at 110% 0%, #244a55, transparent 50%), var(--navy); color: white; padding: 30px 27px 29px; text-align: center; }
+    .result-eyebrow { color: #8ae7d0; text-transform: uppercase; letter-spacing: 1.8px; font-size: 11px; font-weight: 800; }
+    .result-top h2 { margin: 11px 0 4px; font-size: 22px; }
+    .result-intro { color: #a6bacb; font-size: 12px; line-height: 1.6; }
+    .gauge {
+      --angle: 0deg;
+      height: 234px; width: 234px; margin: 23px auto 18px; padding: 13px;
+      border-radius: 50%; background: conic-gradient(var(--mint) 0deg var(--angle), #314459 var(--angle) 360deg);
+      transition: background .25s;
+    }
+    .gauge-core {
+      height: 100%; width: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; border-radius: 50%;
+      background: #101e32; box-shadow: inset 0 0 22px rgba(0,0,0,.1);
+    }
+    .big-number { font-size: 52px; letter-spacing: -2.5px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+    .big-number small { font-size: 22px; color: #79e9d0; margin-left: 2px; }
+    .big-caption { color: #9eafc1; margin-top: 11px; font-size: 11px; }
+    .result-status { min-height: 42px; font-size: 12px; color: #afc0d0; line-height: 1.65; margin: 0; }
+    .result-bottom { padding: 23px 25px 27px; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; margin-bottom: 14px; }
+    .detail-row span { color: #728197; }
+    .detail-row strong { color: #22334b; }
+    .badge { border-radius: 20px; padding: 5px 9px; background: #eaf7f3; font-size: 10px; font-weight: 800; color: #237760; }
+    .notice { background: #f5f8fb; border: 1px solid #e6edf4; border-radius: 12px; padding: 14px; margin-top: 18px; color: #69788b; font-size: 11px; line-height: 1.65; }
+    .notice strong { color: #334860; }
+    .footer { text-align: center; padding-top: 30px; color: #8e9aaa; font-size: 11px; }
+    @media (max-width: 840px) { .layout { grid-template-columns: 1fr; } .results { position: static; } .hero { padding-bottom: 111px; } }
+    @media (max-width: 520px) {
+      .hero, main { padding-left: 16px; padding-right: 16px; }
+      .hero { padding-bottom: 102px; }
+      .intro { padding-top: 24px; }
+      h1 { letter-spacing: -1.3px; }
+      .form-card { padding: 22px 18px; }
+      .field-grid { gap: 13px; }
+      .input-shell input { padding-left: 10px; padding-right: 36px; font-size: 13px; }
+      .suffix { right: 9px; font-size: 11px; }
+      .gauge { width: 215px; height: 215px; }
+    }
+
+    /* Theme variables apply to the app only. The hero retains its dark branding. */
+    body.dark-mode {
+      color-scheme: dark;
+      --ink: #edf4fc;
+      --muted: #a6b7cb;
+      --line: #304158;
+      --surface: #1a2a3e;
+      --canvas: #0c1625;
+      --navy: #0b1524;
+      --mint: #68e9c9;
+    }
+    body, .card, .input-shell input, .notice, .quick-fact { transition: background-color .2s, color .2s, border-color .2s; }
+    .dark-mode .card { border-color: #33465d; box-shadow: 0 16px 52px rgba(0,0,0,.22); }
+    .dark-mode .field-name { color: #d6e3ef; }
+    .dark-mode .input-shell input { background: #122136; border-color: #3a526c; color: #f1f7ff; }
+    .dark-mode .input-shell input:focus { background: #172b43; border-color: #69e5ca; box-shadow: 0 0 0 3px #68e9c928; }
+    .dark-mode .suffix { color: #a6bad0; }
+    .dark-mode .helper, .dark-mode .form-footnote, .dark-mode .footer { color: #a8b8cb; }
+    .dark-mode .section-label span { background: #184d48; color: #97f8df; }
+    .dark-mode .quick-fact { background: #143b39; color: #9ce7d6; }
+    .dark-mode .detail-row span { color: #aec0d3; }
+    .dark-mode .detail-row strong { color: #edf4fc; }
+    .dark-mode .badge { background: #16443f; color: #a1f8df; }
+    .dark-mode .notice { background: #122136; border-color: #35485d; color: #b8c6d7; }
+    .dark-mode .notice strong { color: #e7f5ff; }
+    .dark-mode .result-bottom { color: #edf4fc; }
+    .dark-mode .result-top { background: radial-gradient(circle at 110% 0%, #20525b, transparent 50%), #0d1726; }
+    .dark-mode .gauge-core { background: #0d1726; }
+    @media (max-width: 520px) {
+      .nav { align-items: flex-start; gap: 12px; }
+      .nav-actions { flex-wrap: wrap; justify-content: flex-end; }
+      .theme-toggle { padding: 8px 10px; }
+      .version { padding: 8px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body, .card, .input-shell input, .notice, .quick-fact, .theme-toggle { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <nav class="nav" aria-label="Main navigation">
+        <div class="brand"><span class="brand-mark">R</span> Retire-Proof<span style="color:#65ddc6">.</span></div>
+        <div class="nav-actions">
+          <span class="version">MODEL V1</span>
+          <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Enable dark mode" aria-pressed="false">🌙 Dark mode</button>
+        </div>
+      </nav>
+      <div class="intro">
+        <div class="eyebrow">Retirement planning lab</div>
+        <h1>See your future<br /><span>more clearly.</span></h1>
+        <p class="lead">Explore an experimental retirement survival estimate powered by a neural network built from scratch. Change your financial inputs and see the model's prediction.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap layout">
+      <section class="card form-card" aria-labelledby="form-heading">
+        <div class="form-header">
+          <h2 id="form-heading">Your financial snapshot</h2>
+          <p class="sub">Enter seven details to generate a retirement estimate.</p>
+        </div>
+        <form id="retirement-form">
+          <div class="section">
+            <div class="section-label"><span>01</span> Retirement timeline</div>
+            <div class="field-grid">
+              <label class="field" for="age"><span class="field-name">Current age</span><div class="input-shell"><input id="age" type="number" min="0" max="120" step="1" value="25" required /><span class="suffix">years</span></div></label>
+              <label class="field" for="retirement"><span class="field-name">Retirement age</span><div class="input-shell"><input id="retirement" type="number" min="0" max="120" step="1" value="65" required /><span class="suffix">years</span></div></label>
+            </div>
+            <div class="quick-fact"><span class="fact-dot"></span><span id="years-to-retirement">40 years until your planned retirement</span></div>
+          </div>
+
+          <div class="section">
+            <div class="section-label"><span>02</span> Savings & spending</div>
+            <div class="field-grid">
+              <label class="field" for="corpus"><span class="field-name">Current corpus</span><div class="input-shell"><input id="corpus" type="number" min="0" step="any" value="500000" required /><span class="suffix">₹</span></div><small class="helper">Total amount already invested</small></label>
+              <label class="field" for="monthly_savings"><span class="field-name">Monthly savings</span><div class="input-shell"><input id="monthly_savings" type="number" min="0" step="any" value="25000" required /><span class="suffix">₹/mo</span></div><small class="helper">What you save every month</small></label>
+              <label class="field" for="monthly_expense_today"><span class="field-name">Monthly expenses</span><div class="input-shell"><input id="monthly_expense_today" type="number" min="0" step="any" value="30000" required /><span class="suffix">₹/mo</span></div><small class="helper">Your expenses in today's money</small></label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-label"><span>03</span> Market assumptions</div>
+            <div class="field-grid">
+              <label class="field" for="equity_alloc"><span class="field-name">Equity allocation</span><div class="input-shell"><input id="equity_alloc" type="number" min="0" max="100" step="any" value="60" required /><span class="suffix">%</span></div><small class="helper">Share allocated to equity</small></label>
+              <label class="field" for="infl"><span class="field-name">Annual inflation</span><div class="input-shell"><input id="infl" type="number" min="0" max="100" step="any" value="7" required /><span class="suffix">%</span></div><small class="helper">Expected annual inflation rate</small></label>
+            </div>
+          </div>
+
+          <button id="predict-button" class="submit-btn" type="submit">Generate prediction <span aria-hidden="true">↗</span></button>
+          <p class="form-footnote">Inputs are sent to the FastAPI backend.</p>
+        </form>
+      </section>
+
+      <aside class="card results" aria-labelledby="result-heading">
+        <div class="result-top">
+          <span class="result-eyebrow">Your model result</span>
+          <h2 id="result-heading">Retirement outlook</h2>
+          <p class="result-intro">Estimated probability of retirement funds lasting through the modeled horizon</p>
+          <div id="gauge" class="gauge" role="img" aria-label="No prediction calculated yet">
+            <div class="gauge-core">
+              <div class="big-number"><span id="prediction-number">—</span><small id="percent-sign" hidden>%</small></div>
+              <div class="big-caption">Experimental NN estimate</div>
+            </div>
+          </div>
+          <p id="prediction-output" class="result-status" role="status" aria-live="polite">Enter your information and select “Generate prediction”.</p>
+        </div>
+        <div class="result-bottom">
+          <div class="detail-row"><span>Prediction engine</span><strong>From-scratch neural network</strong></div>
+          <div class="detail-row"><span>Model</span><span id="model-version" class="badge">v1.0</span></div>
+          <div class="detail-row"><span>Planning horizon</span><strong>To age 90</strong></div>
+          <div class="notice"><strong>Important:</strong> This NN is an experimental approximation trained on simulated scenarios. Test errors can be large, especially in low-survival cases. Do not rely on this estimate alone for financial decisions; verify using the Monte Carlo simulation and qualified advice.</div>
+        </div>
+      </aside>
+    </div>
+    <div class="footer">Retire-Proof · Built with a neural network from scratch</div>
+  </main>
+
+  <script>
+    // This file is self-contained. Do not include the old script.js as well.
+    const API_URL = "http://127.0.0.1:8000/predict";
+    const form = document.getElementById("retirement-form");
+    const output = document.getElementById("prediction-output");
+    const predictButton = document.getElementById("predict-button");
+    const gauge = document.getElementById("gauge");
+    const predictionNumber = document.getElementById("prediction-number");
+    const percentSign = document.getElementById("percent-sign");
+
+    // Dark mode: keep preference across page refreshes.
+    const themeToggle = document.getElementById("theme-toggle");
+    const setTheme = (isDark) => {
+      document.body.classList.toggle("dark-mode", isDark);
+      themeToggle.textContent = isDark ? "☀️ Light mode" : "🌙 Dark mode";
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+      themeToggle.setAttribute("aria-label", isDark ? "Enable light mode" : "Enable dark mode");
+      document.querySelector('meta[name="theme-color"]').setAttribute("content", isDark ? "#0c1625" : "#0d182b");
+    };
+    let savedTheme = "light";
+    try { savedTheme = localStorage.getItem("retire-proof-theme") || "light"; } catch (_) {}
+    setTheme(savedTheme === "dark");
+    themeToggle.addEventListener("click", () => {
+      const isDark = !document.body.classList.contains("dark-mode");
+      setTheme(isDark);
+      try { localStorage.setItem("retire-proof-theme", isDark ? "dark" : "light"); } catch (_) {}
+    });
+
+
+    function updateYears() {
+      const age = Number(document.getElementById("age").value);
+      const retirement = Number(document.getElementById("retirement").value);
+      const el = document.getElementById("years-to-retirement");
+      if (!document.getElementById("age").value || !document.getElementById("retirement").value || retirement <= age) {
+        el.textContent = "Retirement age must be greater than current age";
+        return;
+      }
+      const years = retirement - age;
+      el.textContent = `${Number.isInteger(years) ? years : years.toFixed(1)} years until your planned retirement`;
+    }
+    ["age", "retirement"].forEach(id => document.getElementById(id).addEventListener("input", updateYears));
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const data = {
+        age: Number(document.getElementById("age").value),
+        retirement: Number(document.getElementById("retirement").value),
+        corpus: Number(document.getElementById("corpus").value),
+        monthly_savings: Number(document.getElementById("monthly_savings").value),
+        monthly_expense_today: Number(document.getElementById("monthly_expense_today").value),
+        equity_alloc: Number(document.getElementById("equity_alloc").value) / 100,
+        infl: Number(document.getElementById("infl").value) / 100
+      };
+
+      if (data.retirement <= data.age) {
+        output.textContent = "Retirement age must be greater than current age.";
+        return;
+      }
+      if (!Object.values(data).every(Number.isFinite)) {
+        output.textContent = "Please enter valid numbers for all fields.";
+        return;
+      }
+
+      output.textContent = "Calculating your estimate…";
+      predictButton.disabled = true;
+      predictButton.textContent = "Calculating…";
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          const detail = typeof result.detail === "string" ? result.detail : JSON.stringify(result.detail ?? "Prediction failed");
+          throw new Error(detail);
+        }
+        const probability = Number(result.prediction);
+        if (!Number.isFinite(probability) || probability < 0 || probability > 1) {
+          throw new Error("Backend returned an invalid probability.");
+        }
+
+        const percentage = probability * 100;
+        predictionNumber.textContent = percentage.toFixed(2);
+        percentSign.hidden = false;
+        gauge.style.setProperty("--angle", `${probability * 360}deg`);
+        gauge.setAttribute("aria-label", `Experimental NN estimate: ${percentage.toFixed(2)} percent`);
+        document.getElementById("model-version").textContent = result.model_version ?? "v1.0";
+        output.textContent = "Prediction calculated. This is a model estimate, not a guarantee.";
+      } catch (error) {
+        console.error("API Error:", error);
+        output.textContent = "Unable to get prediction: " + error.message;
+      } finally {
+        predictButton.disabled = false;
+        predictButton.innerHTML = 'Generate prediction <span aria-hidden="true">↗</span>';
+      }
+    });
+  </script>
+</body>
+</html>
